@@ -1628,10 +1628,13 @@ class RepoStatTable:
       { "label" : "?", "align":"R", "fields" : [] },
       ]
 
-  def insertRepoStat(self, repoDir, repoStat, repoID):
+  def insertRepoStat(self, repoDir, repoStat, repoID, defaultBranchDict):
     self.tableData[0]["fields"].append(str(repoID))
     self.tableData[1]["fields"].append(repoDir)
-    self.tableData[2]["fields"].append(repoStat.branch)
+    branchName = repoStat.branch
+    if branchName != defaultBranchDict[repoDir]:
+      branchName = "\x1b[91m" + branchName + "\x1b[39m"
+    self.tableData[2]["fields"].append(branchName)
     self.tableData[3]["fields"].append(repoStat.trackingBranch)
     self.tableData[4]["fields"].append(convertZeroStrToEmpty(repoStat.numCommits))
     self.tableData[5]["fields"].append(convertZeroStrToEmpty(repoStat.numModified))
@@ -1716,7 +1719,8 @@ if __name__ == '__main__':
       repoName = getRepoName(repo, baseRepoName)
       repoNameInTpl = repoName + (" (Base)" if repo=="." else "") 
       if distRepoStatus:
-        repoStatTable.insertRepoStat(repoNameInTpl, repoStats, repoID)
+        repoStatTable.insertRepoStat(repoNameInTpl, repoStats, repoID, \
+          defaultBranchDict)
         processThisExtraRepo = False
       else:
         print("")
