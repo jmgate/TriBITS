@@ -732,19 +732,20 @@ def stripAnsiEscapeSequences(string):
   """, re.VERBOSE).sub("", string)
 
 
+def getBetweenColorCodes(string):
+  if len(string) != len(stripAnsiEscapeSequences(string)):
+    return (string[:5], string[5:-5], string[-5:])
+  else:
+    return ("", string, "")
+
+
 # Shrink a string to a given width by inserting an ellipsis (...) in the
 # middle.
 def shrinkString(string, width):
   if len(stripAnsiEscapeSequences(string)) > width:
     start = int(width//2) - 1
     stop  = width - start - 3
-    pre = ""
-    inner = string
-    post = ""
-    if len(string) != len(stripAnsiEscapeSequences(string)):
-      pre = string[:5]
-      inner = string[5:-5]
-      post = string[-5:]
+    (pre, inner, post) = getBetweenColorCodes(string)
     return pre + inner[:start] + "..." + inner[-stop:] + post
   else:
     return string
@@ -752,13 +753,7 @@ def shrinkString(string, width):
 
 # Fill in a field
 def getTableField(field, width, just):
-  pre = ""
-  inner = field
-  post = ""
-  if len(field) != len(stripAnsiEscapeSequences(field)):
-    pre = field[:5]
-    inner = field[5:-5]
-    post = field[-5:]
+  (pre, inner, post) = getBetweenColorCodes(field)
   if just == "R":
     return pre + inner.rjust(width) + post
   return pre + inner.ljust(width) + post
