@@ -723,22 +723,45 @@ helpTopicsDict.update( { 'script-dependencies' : scriptDependenciesHelp } )
 #
 
 
+def stripAnsiEscapeSequences(string):
+  return re.compile(r"""
+    \x1b     # literal ESC
+    \[       # literal [
+    [;\d]*   # zero or more digits or semicolons
+    [A-Za-z] # a letter
+  """, re.VERBOSE).sub("", string)
+
+
 # Shrink a string to a given width by inserting an ellipsis (...) in the
 # middle.
 def shrinkString(string, width):
-  if len(string) > width:
+  if len(stripAnsiEscapeSequences(string)) > width:
     start = int(width//2) - 1
     stop  = width - start - 3
-    return string[:start] + "..." + string[-stop:]
+    pre = ""
+    inner = string
+    post = ""
+    if len(string) != len(stripAnsiEscapeSequences(string)):
+      pre = string[:5]
+      inner = string[5:-5]
+      post = string[-5:]
+    return pre + inner[:start] + "..." + inner[-stop:] + post
   else:
     return string
 
 
 # Fill in a field
 def getTableField(field, width, just):
+  pre = ""
+  inner = field
+  post = ""
+  if len(field) != len(stripAnsiEscapeSequences(field)):
+    pre = field[:5]
+    inner = field[5:-5]
+    post = field[-5:]
   if just == "R":
-    return field.rjust(width)
-  return field.ljust(width)
+    return pre + inner.rjust(width) + post
+  return pre + inner.ljust(width) + post
 
 
 # Format a table from a set of fields
@@ -767,7 +790,7 @@ def createTable(tableData, utf8=False):
       raise Exception("Error: column '"+label+"' numfields = " + \
         str(len(fieldDict["fields"])) + " != numRows = "+str(numRows)+"\n" )
     for field in fieldDict["fields"]:
-      fieldWidth = len(field)
+      fieldWidth = len(stripAnsiEscapeSequences(field))
       if fieldWidth > maxFieldWidth: maxFieldWidth = fieldWidth
     tableFieldWidth.append(maxFieldWidth)
 
